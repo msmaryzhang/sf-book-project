@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SF Book Project</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Courier New", Courier, monospace;
+      background-color: #2e7d32; /* Golden Gate Park green */
+      color: #fff;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 300px;
+      background: #1b5e20;
+      border-right: 4px solid #000;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin: 0;
+      padding: 10px;
+      background: #004d40;
+      border: 2px solid #000;
+    }
+    .book-item {
+      margin: 10px 0;
+      padding: 5px;
+      border: 1px solid #000;
+      background: #388e3c;
+      cursor: pointer;
+      position: relative;
+    }
+    .book-item:hover img {
+      display: block;
+    }
+    .book-item img {
+      display: none;
+      position: absolute;
+      left: 110%;
+      top: 0;
+      max-width: 150px;
+      border: 2px solid #000;
+      background: #fff;
+      z-index: 10;
+    }
+    .delete-btn {
+      margin-left: 10px;
+      background: #c62828;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 32px;
+      text-align: center;
+      text-shadow: 2px 2px #000;
+    }
+    form {
+      margin-top: 20px;
+      background: #1b5e20;
+      padding: 15px;
+      border: 3px solid #000;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input, select {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+      font-family: inherit;
+    }
+    button {
+      padding: 8px 15px;
+      background: #004d40;
+      color: #fff;
+      border: 2px solid #000;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Book List</h2>
+    <label for="filter">View:</label>
+    <select id="filter">
+      <option value="all">All Books</option>
+      <option value="mine">My Books</option>
+    </select>
+    <div id="bookList"></div>
+  </div>
+  <div class="main">
+    <h1>SF Book Project</h1>
+    <form id="bookForm">
+      <label for="title">Book Title</label>
+      <input type="text" id="title" required>
+      
+      <label for="author">Author</label>
+      <input type="text" id="author" required>
+      
+      <label for="photo">Book Photo</label>
+      <input type="file" id="photo" accept="image/*">
+      
+      <button type="submit">Add Book</button>
+    </form>
+  </div>
+
+  <script>
+    const bookForm = document.getElementById("bookForm");
+    const bookList = document.getElementById("bookList");
+    const filter = document.getElementById("filter");
+    const userId = Date.now().toString(); // Simple way to "identify" current user
+    
+    let books = [];
+
+    function renderBooks() {
+      bookList.innerHTML = "";
+      const view = filter.value;
+      books.forEach((book, index) => {
+        if (view === "mine" && book.owner !== userId) return;
+
+        const div = document.createElement("div");
+        div.className = "book-item";
+        div.innerHTML = `<strong>${book.title}</strong> by ${book.author}`;
+        
+        if (book.photo) {
+          const img = document.createElement("img");
+          img.src = book.photo;
+          div.appendChild(img);
+        }
+
+        if (book.owner === userId) {
+          const delBtn = document.createElement("button");
+          delBtn.className = "delete-btn";
+          delBtn.innerText = "Delete";
+          delBtn.onclick = () => {
+            books.splice(index, 1);
+            renderBooks();
+          };
+          div.appendChild(delBtn);
+        }
+
+        bookList.appendChild(div);
+      });
+    }
+
+    bookForm.addEventListener("submit", e => {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const author = document.getElementById("author").value;
+      const photoInput = document.getElementById("photo");
+      let photo = "";
+      
+      if (photoInput.files && photoInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          photo = e.target.result;
+          books.push({ title, author, photo, owner: userId });
+          renderBooks();
+        };
+        reader.readAsDataURL(photoInput.files[0]);
+      } else {
+        books.push({ title, author, photo: "", owner: userId });
+        renderBooks();
+      }
+      
+      bookForm.reset();
+    });
+
+    filter.addEventListener("change", renderBooks);
+  </script>
+</body>
+</html>
